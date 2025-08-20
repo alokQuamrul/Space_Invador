@@ -99,6 +99,64 @@ def isCollision(enemyX, enemyY, bulletX, bulletY):
 #Game loop
 running = True  # Main game loop control variable
 
+while running:
+    screen.fill((0, 0, 0))  # Fill screen with black (background)
+    screen.blit(background, (0, 0))  # Draw background image
+
+    for event in pygame.event.get():  # Process all game events
+        if event.type == pygame.QUIT:  # If window close button clicked
+            running = False  # Exit game loop
+        if event.type == pygame.KEYDOWN:  # If key is pressed
+            if event.key == pygame.K_LEFT:  # Left arrow key
+                playerX_change = -5  # Move player left
+            if event.key == pygame.K_RIGHT:  # Right arrow key
+                playerX_change = 5  # Move player right
+            if event.key == pygame.K_SPACE and bullet_state == "ready":  # Space key to fire
+                bulletX = playerX  # Set bullet start position to player position
+                fire_bullet(bulletX, bulletY)  # Fire bullet
+        if event.type == pygame.KEYUP and event.key in [pygame.K_LEFT, pygame.K_RIGHT]:  # Key released
+            playerX_change = 0  # Stop player movement
+
+    # Player Movement
+    playerX += playerX_change  # Update player position
+    playerX = max(0, min(playerX, SCREEN_WIDTH - 64))  # Keep player within screen bounds (64 is player size)
+
+    # Enemy Movement
+    for i in range(num_of_enemies):
+        if enemyY[i] > 340:  # Game Over Condition (enemy reached bottom)
+            for j in range(num_of_enemies):
+                enemyY[j] = 2000  # Move all enemies off-screen
+            game_over_text()  # Show game over message
+            break  # Exit loop
+
+        enemyX[i] += enemyX_change[i]  # Move enemy horizontally
+        if enemyX[i] <= 0 or enemyX[i] >= SCREEN_WIDTH - 64:  # If enemy hits screen edge
+            enemyX_change[i] *= -1  # Reverse horizontal direction
+            enemyY[i] += enemyY_change[i]  # Move enemy down
+
+        # Collision Check
+        if isCollision(enemyX[i], enemyY[i], bulletX, bulletY):  # If bullet hits enemy
+            bulletY = PLAYER_START_Y  # Reset bullet position
+            bullet_state = "ready"  # Reset bullet state
+            score_value += 1  # Increase score
+            enemyX[i] = random.randint(0, SCREEN_WIDTH - 64)  # Respawn enemy at random X
+            enemyY[i] = random.randint(ENEMY_START_Y_MIN, ENEMY_START_Y_MAX)  # Respawn enemy at random Y
+
+        enemy(enemyX[i], enemyY[i], i)  # Draw enemy
+
+    # Bullet Movement
+    if bulletY <= 0:  # If bullet goes off top of screen
+        bulletY = PLAYER_START_Y  # Reset bullet position
+        bullet_state = "ready"  # Reset bullet state
+    elif bullet_state == "fire":  # If bullet is active
+        fire_bullet(bulletX, bulletY)  # Draw bullet
+        bulletY -= bulletY_change  # Move bullet upward
+
+    player(playerX, playerY)  # Draw player
+    show_score(textX, textY)  # Draw score
+    pygame.display.update()  # Update the display
+
+
 
 
 
